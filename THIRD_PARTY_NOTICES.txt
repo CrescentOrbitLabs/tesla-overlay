@@ -1,0 +1,80 @@
+THIRD-PARTY NOTICES
+
+Tesla Overlay is licensed under the MIT License (see LICENSE). It includes
+or uses the third-party software and data listed below. Each remains under
+its own license and belongs to its respective authors.
+
+Tesla Overlay is an independent project. It is not affiliated with,
+endorsed by, or sponsored by Tesla, Inc. "Tesla" is a trademark of
+Tesla, Inc., used here only to describe compatibility with its dashcam files.
+
+
+FFmpeg 7.1  (https://ffmpeg.org)
+  License: GNU General Public License
+    Windows build: GPL version 3 (gyan.dev "essentials" build, includes x264)
+    Intel Mac build: GPL version 3 (includes x264)
+    Apple Silicon Mac build: GPL version 2 or later (includes x264)
+  FFmpeg is a separate, unmodified program that Tesla Overlay runs to read
+  and write video. It is not part of Tesla Overlay's own code, and the MIT
+  License does not apply to it. The builds are distributed through the
+  imageio-ffmpeg project.
+  Full license texts: licenses/GPL-3.0.txt and licenses/GPL-2.0.txt
+  Source code:
+    FFmpeg 7.1  https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz
+    x264        https://code.videolan.org/videolan/x264
+    Windows build configuration  https://www.gyan.dev/ffmpeg/builds/
+    imageio-ffmpeg build scripts  https://github.com/imageio/imageio-ffmpeg
+
+OpenStreetMap map data and tiles  (https://www.openstreetmap.org/copyright)
+  Map data (c) OpenStreetMap contributors, available under the Open Data
+  Commons Open Database License (ODbL). Map tiles are served by the
+  OpenStreetMap Foundation and used under its tile usage policy. Exported
+  maps carry the required attribution.
+
+Python 3.12  (https://www.python.org)
+  License: Python Software Foundation License Agreement
+  https://docs.python.org/3/license.html
+  Includes components under their own permissive licenses, such as
+  OpenSSL (Apache 2.0), SQLite (public domain), libffi (MIT) and zlib.
+
+Tcl/Tk 8.6  (https://www.tcl.tk)
+  License: Tcl/Tk license (BSD style)
+  https://www.tcl.tk/software/tcltk/license.html
+
+Pillow  (https://python-pillow.github.io)
+  License: MIT-CMU (Historical Permission Notice and Disclaimer)
+  Copyright (c) 1997-2011 Secret Labs AB, (c) 1995-2011 Fredrik Lundh and
+  contributors, (c) 2010 Jeffrey A. Clark and contributors.
+
+imageio-ffmpeg  (https://github.com/imageio/imageio-ffmpeg)
+  License: BSD 2-Clause
+
+pywebview  (https://pywebview.flowrl.com)
+  License: BSD 3-Clause. Copyright (c) 2014-2017, Roman Sirokov and
+  contributors.
+
+Microsoft Edge WebView2 SDK libraries (Windows)
+  Copyright (c) Microsoft Corporation. Redistributed with pywebview under
+  the WebView2 SDK license:
+  https://www.nuget.org/packages/Microsoft.Web.WebView2/license
+
+Python.NET (pythonnet) and clr-loader (Windows)
+  License: MIT. Copyright (c) the Python.NET authors; clr-loader
+  Copyright (c) 2019-2026 Benedikt Reinartz.
+
+PyObjC (Mac)  (https://github.com/ronaldoussoren/pyobjc)
+  License: MIT. Copyright (c) Ronald Oussoren and contributors.
+
+PyInstaller bootloader (Windows)  (https://pyinstaller.org)
+  License: GPL version 2 with the PyInstaller bootloader exception, which
+  allows the bootloader to be distributed with programs under any license.
+
+bottle (MIT), proxy_tools (MIT), typing_extensions (PSF 2.0),
+cffi (MIT-0), pycparser (BSD 3-Clause)
+  Small supporting libraries used by pywebview.
+
+Tesla dashcam metadata format
+  Tesla Overlay reads the telemetry Tesla embeds in its dashcam videos,
+  following the format Tesla documents at
+  https://github.com/teslamotors/dashcam
+  No Tesla code is included.

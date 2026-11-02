@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+*.spec
+
+# The phone version is kept out of this repository for now
+mobile/
+
+# Signing keys: never commit a key or its password
+*.jks
+*.keystore
+keystore.properties
+KEY_INFO.txt
+local.properties
+
+# Videos and maps made while testing
+*_overlay.mp4
+*_map.mp4
+*_map.png
+TeslaCam/
+
+# OS
+.DS_Store
+Thumbs.db
