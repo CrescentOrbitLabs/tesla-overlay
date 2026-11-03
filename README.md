@@ -6,7 +6,7 @@
 
 <p align="center">
   Turn Tesla dashcam clips into videos with your speed, an FSD-style driving path and a live map, burned right in.<br>
-  For Windows and Mac · Free and open source
+  For Windows and Mac · Free
 </p>
 
 <p align="center">
@@ -54,8 +54,8 @@ Get the files from the [latest release](../../releases/latest).
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Windows 10 and 11 | `TeslaOverlay-1.0.0-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
-| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.0-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
+| Windows 10 and 11 | `TeslaOverlay-1.0.1-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
+| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.1-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
 
 The apps aren't signed with paid developer certificates yet, which is why Windows and macOS ask before the first launch.
 
@@ -93,7 +93,7 @@ Tesla Overlay is free. If it's useful to you:
 
 ## License
 
-Tesla Overlay is released under the [MIT License](LICENSE).
+Tesla Overlay is free to use for personal and noncommercial purposes under the [PolyForm Strict License 1.0.0](LICENSE). The source code is published here so you can see exactly what the app does, but the license does not allow modifying it, redistributing it, or building new works from it.
 
 It bundles FFmpeg (GNU GPL) and other open source components, and uses OpenStreetMap data (© OpenStreetMap contributors). Their licenses and source links are listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), with full license texts in [licenses](licenses). The same information is in the app under License.
 

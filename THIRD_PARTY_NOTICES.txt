@@ -1,6 +1,7 @@
 THIRD-PARTY NOTICES
 
-Tesla Overlay is licensed under the MIT License (see LICENSE). It includes
+Tesla Overlay is licensed under the PolyForm Strict License 1.0.0 (see
+LICENSE). It includes
 or uses the third-party software and data listed below. Each remains under
 its own license and belongs to its respective authors.
 
@@ -15,8 +16,8 @@ FFmpeg 7.1  (https://ffmpeg.org)
     Intel Mac build: GPL version 3 (includes x264)
     Apple Silicon Mac build: GPL version 2 or later (includes x264)
   FFmpeg is a separate, unmodified program that Tesla Overlay runs to read
-  and write video. It is not part of Tesla Overlay's own code, and the MIT
-  License does not apply to it. The builds are distributed through the
+  and write video. It is not part of Tesla Overlay's own code, and Tesla
+  Overlay's license does not apply to it. The builds are distributed through the
   imageio-ffmpeg project.
   Full license texts: licenses/GPL-3.0.txt and licenses/GPL-2.0.txt
   Source code:

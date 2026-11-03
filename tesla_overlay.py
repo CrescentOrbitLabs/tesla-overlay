@@ -17,7 +17,7 @@ import tesla_overlay_core as core
 import tesla_map
 
 APP_NAME = "Tesla Overlay"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 SUPPORT_URL = "https://buymeacoffee.com/joshuah1998"
 SIGNATURE = "Copyright \u00a9 Joshua Hugley 2026  \u00b7  Made with \u2764\ufe0f in South Carolina"
 SETTINGS = os.path.join(os.path.expanduser("~"), ".tesla_overlay.json")
@@ -421,7 +421,7 @@ def run_gui():
         win.title(f"License \u00b7 {APP_NAME} {APP_VERSION}")
         nb = ttk.Notebook(win)
         nb.pack(fill="both", expand=True, padx=10, pady=10)
-        for key, title in (("license", "Tesla Overlay"), ("notices", "Open source"),
+        for key, title in (("license", "Tesla Overlay"), ("notices", "Third party"),
                            ("gpl3", "GPL v3"), ("gpl2", "GPL v2")):
             page = ttk.Frame(nb)
             txt = tk.Text(page, width=86, height=30, wrap="word", font=("Courier", 10))

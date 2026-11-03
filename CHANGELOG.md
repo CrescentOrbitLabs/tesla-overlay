@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 (2026-11-02)
+
+- Tesla Overlay is now licensed under the PolyForm Strict License 1.0.0 instead of the MIT License. It stays free for personal and noncommercial use; modifying or redistributing it is no longer permitted. Copies of 1.0.0 already downloaded keep their original license.
+- The License panel's third-party notices tab is now labeled Third party.
+
 ## 1.0.0 (2026-11-01)
 
 First public release, for Windows and macOS.
