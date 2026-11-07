@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.3 (2026-11-07)
+
+- New Advanced menu in the Overlay card for details the clips don't record: speed profile (Sloth, Chill, Standard, Hurry, Mad Max), car model (every Tesla model and trim), and FSD version (every release from v9 to v14.3, including the HW3 Lite builds, or any exact version typed in). Anything set is shown in a strip above the time on the video.
+- Command line: `--model`, `--fsd` and `--profile`.
+
+## 1.0.2 (2026-11-07)
+
+- New Hardware menu (Auto, HW3, HW4). Auto detects the car's hardware from the clip's video size, and the choice sets the camera field of view used for the driving path.
+- The hardware version is shown next to the time in the video, with a switch to hide it.
+- Command line: `--hw=auto|hw3|hw4` and `--no-hw-label`.
+
 ## 1.0.1 (2026-11-02)
 
 - Tesla Overlay is now licensed under the PolyForm Strict License 1.0.0 instead of the MIT License. It stays free for personal and noncommercial use; modifying or redistributing it is no longer permitted. Copies of 1.0.0 already downloaded keep their original license.

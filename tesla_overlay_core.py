@@ -248,6 +248,7 @@ DIM = (120, 120, 120, 255)
 GREEN = (60, 220, 110, 255)
 RED = (240, 60, 60, 255)
 BLUE = (60, 140, 255, 255)
+ACCENT_STRIP = (60, 140, 255, 150)
 PANEL = (12, 12, 14, 200)
 
 
@@ -312,9 +313,90 @@ def smoothed_accel(telemetry, fps, half_window_s=0.5):
             max((min(i + w, n - 1) - max(i - w, 0)) / fps, 1e-6) for i in range(n)]
 
 
-def camera_hfov(width):
-    """Front dashcam field of view. HW4 (2896 px wide) measured from real footage; HW3 main camera is 50 degrees."""
-    return 41.2 if width >= 2000 else 50.0
+# Dashcam recording sizes by hardware. HW3 records every camera at 1280 x 960 (4:3,
+# from its 1.2 MP sensors). HW4 records the front camera at its full 2896 x 1876
+# (5.4 MP sensor) and the other cameras at half that, 1448 x 938.
+HARDWARE_RESOLUTIONS = {
+    "HW3": {"front": (1280, 960), "other": (1280, 960)},
+    "HW4": {"front": (2896, 1876), "other": (1448, 938)},
+}
+HARDWARE_CHOICES = ("auto", "hw3", "hw4")
+# Front camera horizontal field of view in the recorded frame. HW4 measured from
+# real footage; HW3 records its 50 degree main camera.
+HARDWARE_HFOV = {"HW3": 50.0, "HW4": 41.2}
+
+
+def detect_hardware(width, height):
+    """Best guess of the car's hardware from the clip's frame size, or None if it
+    doesn't match a known size. Falls back to the aspect ratio so clips that were
+    resized (for example by the Tesla app or another editor) are still recognized."""
+    for hw, sizes in HARDWARE_RESOLUTIONS.items():
+        if (width, height) in sizes.values():
+            return hw
+    if not width or not height:
+        return None
+    ratio = width / height
+    if abs(ratio - 4 / 3) < 0.03:
+        return "HW3"
+    if abs(ratio - 2896 / 1876) < 0.03:
+        return "HW4"
+    return None
+
+
+def resolve_hardware(choice, width, height):
+    """The hardware to use: the user's choice ("hw3" / "hw4"), or the detected one for "auto".
+    Unrecognized sizes fall back to HW4 when the frame is large, otherwise HW3."""
+    choice = (choice or "auto").lower()
+    if choice in ("hw3", "hw4"):
+        return choice.upper()
+    return detect_hardware(width, height) or ("HW4" if width >= 2000 else "HW3")
+
+
+def camera_hfov(hardware):
+    return HARDWARE_HFOV.get(hardware, 50.0)
+
+
+# ---------------------------------------------------------------------------
+# Advanced details the user can add to the video. The clips don't record these,
+# so they are chosen by hand and drawn as a second strip above the panel.
+SPEED_PROFILES = ("Sloth", "Chill", "Standard", "Hurry", "Mad Max")
+CAR_MODELS = (
+    ("Model S", ("Model S", "Model S Plaid")),
+    ("Model 3", ("Model 3", "Model 3 Performance")),
+    ("Model X", ("Model X", "Model X Plaid")),
+    ("Model Y", ("Model Y", "Model Y Performance", "Model Y L")),
+    ("Cybertruck", ("Cybertruck", "Cybertruck Cyberbeast")),
+    ("Other", ("Cybercab", "Semi", "Roadster")),
+)
+FSD_VERSIONS = (
+    ("FSD v14", ("14.3", "14.2", "14.1", "14.3 Lite", "14.1 Lite", "14 Lite")),
+    ("FSD v13", ("13.2",)),
+    ("FSD v12", ("12.6", "12.5", "12.4", "12.3", "12.2", "12.1")),
+    ("Earlier", ("11.4", "11.3", "10.69", "10", "9")),
+)
+_ALL_MODELS = {m for _, group in CAR_MODELS for m in group}
+_FSD_RE = re.compile(r"^\s*(?:fsd\s*)?v?\s*(\d{1,2}(?:\.\d{1,3}){0,3})\s*(lite)?\s*$", re.I)
+
+
+def fsd_label(version):
+    """'14.3.13' / 'v14.3 lite' / 'FSD 14' -> 'FSD v14.3.13' etc., or None if it isn't a version."""
+    m = _FSD_RE.match(str(version or ""))
+    if not m:
+        return None
+    return f"FSD v{m.group(1)}" + (" Lite" if m.group(2) else "")
+
+
+def advanced_labels(car_model="", fsd_version="", speed_profile=""):
+    """The text pieces for the advanced strip, skipping anything not set or not recognized."""
+    parts = []
+    if car_model in _ALL_MODELS:
+        parts.append(car_model)
+    label = fsd_label(fsd_version) if fsd_version else None
+    if label:
+        parts.append(label)
+    if speed_profile in SPEED_PROFILES:
+        parts.append(f"{speed_profile} profile")
+    return parts
 
 
 def is_front_camera(path):
@@ -323,10 +405,11 @@ def is_front_camera(path):
 
 
 class DrivingPath:
-    def __init__(self, telemetry, width, height, fps, horizon=DEFAULT_HORIZON):
+    def __init__(self, telemetry, width, height, fps, horizon=DEFAULT_HORIZON, hardware=None):
         self.W, self.H, self.fps = width, height, fps
         self.horizon = horizon
-        self.f = (width / 2) / math.tan(math.radians(camera_hfov(width) / 2))
+        hardware = hardware or resolve_hardware("auto", width, height)
+        self.f = (width / 2) / math.tan(math.radians(camera_hfov(hardware) / 2))
         # carry last known values forward through frames without data
         speed, steer, brake, heading, has_heading = [], [], [], [], []
         last = None
@@ -465,13 +548,17 @@ class DrivingPath:
 
 class OverlayRenderer:
     def __init__(self, width, height, units="mph", position="bottom",
-                 show_gps=False, start_time=None, fps=36.0, telemetry=None):
+                 show_gps=False, start_time=None, fps=36.0, telemetry=None, hardware_label=None,
+                 details=None):
         self.W, self.H = width, height
         # what the car is doing, for the bars while FSD / Autosteer / TACC is driving
         self.accel = smoothed_accel(telemetry, fps, 0.3) if telemetry else None
         self.units = units
         self.position = position
         self.show_gps = show_gps
+        self.hardware_label = hardware_label
+        self.details = "   |   ".join(details) if details else ""
+        self._details_img = None
         self.start_time = start_time
         self.fps = fps
         s = width / 1280.0
@@ -493,18 +580,40 @@ class OverlayRenderer:
             self._draw_data(d, t, idx)
         frame_img.paste(panel, (self.px, self.py), panel)
 
+        # strips stacked away from the panel: the time / heading line, then the advanced details
+        gap = int(8 * s)
+        edge = self.py if self.position == "bottom" else self.py + self.ph
         info = self._info_line(t, idx)
-        if info:
-            f = font(17 * s)
-            bbox = ImageDraw.Draw(frame_img).textbbox((0, 0), info, font=f)
-            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            pad = int(8 * s)
-            box = Image.new("RGBA", (tw + pad * 2, th + pad * 2), (0, 0, 0, 0))
-            bd = ImageDraw.Draw(box)
-            bd.rounded_rectangle([0, 0, box.width - 1, box.height - 1], radius=int(8 * s), fill=PANEL)
-            bd.text((pad - bbox[0], pad - bbox[1]), info, font=f, fill=WHITE)
-            iy = self.py - box.height - int(8 * s) if self.position == "bottom" else self.py + self.ph + int(8 * s)
-            frame_img.paste(box, ((self.W - box.width) // 2, iy), box)
+        strips = [self._strip(info, WHITE)] if info else []
+        if self.details:
+            if self._details_img is None:
+                self._details_img = self._strip(self.details, WHITE, tint=ACCENT_STRIP)
+            strips.append(self._details_img)
+        for box in strips:
+            if self.position == "bottom":
+                edge -= gap + box.height
+                frame_img.paste(box, ((self.W - box.width) // 2, edge), box)
+            else:
+                edge += gap
+                frame_img.paste(box, ((self.W - box.width) // 2, edge), box)
+                edge += box.height
+
+    def _strip(self, text, color, tint=None):
+        """A small rounded label like the time line."""
+        s = self.s
+        f = font(17 * s)
+        bbox = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=f)
+        tw = bbox[2] - bbox[0]
+        th = font(17 * s).getbbox("Hg0")[3] - font(17 * s).getbbox("Hg0")[1]
+        pad = int(8 * s)
+        box = Image.new("RGBA", (tw + pad * 2, th + pad * 2), (0, 0, 0, 0))
+        bd = ImageDraw.Draw(box)
+        bd.rounded_rectangle([0, 0, box.width - 1, box.height - 1], radius=int(8 * s), fill=PANEL)
+        if tint:
+            bd.rounded_rectangle([0, 0, box.width - 1, box.height - 1], radius=int(8 * s),
+                                 outline=tint, width=max(1, int(1.5 * s)))
+        bd.text((pad - bbox[0], pad - font(17 * s).getbbox("Hg0")[1]), text, font=f, fill=color)
+        return box
 
     def _info_line(self, t, idx):
         parts = []
@@ -516,6 +625,8 @@ class OverlayRenderer:
             h = t["heading_deg"] % 360
             card = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][int((h + 22.5) // 45) % 8]
             parts.append(f"{card} {h:.0f}\u00b0")
+        if self.hardware_label:
+            parts.append(self.hardware_label)
         return "   |   ".join(parts)
 
     def _draw_data(self, d, t, idx):
@@ -620,13 +731,29 @@ def _load(in_path):
     return telemetry, w, h, fps
 
 
-def _renderers(in_path, telemetry, w, h, fps, units, position, show_gps, driving_path, horizon):
+def _renderers(in_path, telemetry, w, h, fps, units, position, show_gps, driving_path, horizon,
+               hardware="auto", show_hardware=True, details=None):
+    hw = resolve_hardware(hardware, w, h)
     overlay = OverlayRenderer(w, h, units=units, position=position, show_gps=show_gps,
-                              start_time=start_time_from_name(in_path), fps=fps, telemetry=telemetry)
+                              start_time=start_time_from_name(in_path), fps=fps, telemetry=telemetry,
+                              hardware_label=hw if show_hardware else None, details=details)
     path = None
     if driving_path and is_front_camera(in_path):
-        path = DrivingPath(telemetry, w, h, fps, horizon=horizon)
+        path = DrivingPath(telemetry, w, h, fps, horizon=horizon, hardware=hw)
     return overlay, path
+
+
+_hw_cache = {}
+
+
+def clip_hardware(in_path):
+    """(detected hardware or None, width, height) for a clip, from its frame size."""
+    if in_path not in _hw_cache:
+        w, h, _ = probe(in_path)
+        if len(_hw_cache) > 200:
+            _hw_cache.clear()
+        _hw_cache[in_path] = (detect_hardware(w, h), w, h)
+    return _hw_cache[in_path]
 
 
 _frame_cache = {}
@@ -638,7 +765,8 @@ def set_steer_flip(flip):
 
 
 def preview(in_path, at=0.5, units="mph", position="bottom", show_gps=False,
-            driving_path=False, horizon=DEFAULT_HORIZON, flip_steering=False, frame_hook=None, _cache={}):
+            driving_path=False, horizon=DEFAULT_HORIZON, flip_steering=False, frame_hook=None,
+            hardware="auto", show_hardware=True, details=None, _cache={}):
     """Return a PIL image of one overlaid frame, `at` = 0..1 through the clip."""
     if in_path not in _cache:
         _cache.clear()
@@ -666,7 +794,8 @@ def preview(in_path, at=0.5, units="mph", position="bottom", show_gps=False,
             _frame_cache.clear()
         _frame_cache[key] = raw
     img = Image.frombytes("RGB", (w, h), raw)
-    overlay, path = _renderers(in_path, telemetry, w, h, fps, units, position, show_gps, driving_path, horizon)
+    overlay, path = _renderers(in_path, telemetry, w, h, fps, units, position, show_gps, driving_path, horizon,
+                               hardware, show_hardware, details)
     last = next((telemetry[k] for k in range(idx, -1, -1) if telemetry[k]), None)
     if path:
         path.draw(img, idx)
@@ -678,7 +807,7 @@ def preview(in_path, at=0.5, units="mph", position="bottom", show_gps=False,
 
 def convert(in_path, out_path=None, units="mph", position="bottom", show_gps=False,
             driving_path=False, horizon=DEFAULT_HORIZON, flip_steering=False, frame_hook=None,
-            progress=None, cancel=None):
+            hardware="auto", show_hardware=True, details=None, progress=None, cancel=None):
     """
     Burn the telemetry overlay into a new MP4. progress(fraction) is called as
     frames are written; cancel() returning True stops early. Returns out_path.
@@ -688,7 +817,7 @@ def convert(in_path, out_path=None, units="mph", position="bottom", show_gps=Fal
     telemetry, w, h, fps = _load(in_path)
     n = len(telemetry)
     renderer, path = _renderers(in_path, telemetry, w, h, fps, units, position, show_gps,
-                                driving_path, horizon)
+                                driving_path, horizon, hardware, show_hardware, details)
     ff = ffmpeg_exe()
     dec = subprocess.Popen(
         [ff, "-v", "error", "-i", in_path, "-map", "0:v:0", "-fps_mode", "passthrough",

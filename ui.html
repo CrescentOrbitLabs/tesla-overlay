@@ -210,6 +210,58 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 :root[data-theme="dark"] .seg .pill { background: rgba(255,255,255,.2); }
 @media (prefers-color-scheme: dark) { :root[data-theme="system"] .seg .pill { background: rgba(255,255,255,.2); } }
 
+/* ---------- dropdown ---------- */
+.select { position: relative; display: inline-flex; flex-shrink: 0; }
+.select select { appearance: none; -webkit-appearance: none; height: 32px; padding: 0 30px 0 14px; min-width: 92px; border: 0; border-radius: 99px;
+  background: var(--track); color: var(--text); font: inherit; font-size: 12px; font-weight: 560; cursor: pointer;
+  box-shadow: var(--inset); transition: background .2s var(--ease); }
+.select select:hover { background: var(--control-hover); }
+.select select:focus-visible { outline: 2px solid #5a98ff; outline-offset: 2px; }
+.select::after { content: ""; position: absolute; right: 13px; top: 50%; width: 6px; height: 6px; margin-top: -5px; pointer-events: none;
+  border-right: 1.6px solid var(--text-2); border-bottom: 1.6px solid var(--text-2); transform: rotate(45deg); }
+/* the open list is drawn by the system; give it the app's theme, including group headings */
+.select select { color-scheme: light; }
+.select option, .select optgroup { color: #11141b; background: #fff; }
+.select optgroup { color: #6b7385; font-weight: 650; font-style: normal; }
+:root[data-theme="dark"] .select select { color-scheme: dark; }
+:root[data-theme="dark"] .select option { color: #f2f4f8; background: #1d212c; }
+:root[data-theme="dark"] .select optgroup { color: #9aa3b5; background: #1d212c; }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .select select { color-scheme: dark; }
+  :root[data-theme="system"] .select option { color: #f2f4f8; background: #1d212c; }
+  :root[data-theme="system"] .select optgroup { color: #9aa3b5; background: #1d212c; }
+}
+
+/* ---------- advanced menu ---------- */
+.adv-btn { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 9px; margin: -6px -4px -6px 0; border: 0; border-radius: 99px;
+  background: var(--track); color: var(--text-2); font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; cursor: pointer;
+  box-shadow: var(--inset); transition: background .2s var(--ease), color .2s var(--ease); }
+.adv-btn:hover { background: var(--control-hover); color: var(--text); }
+.adv-btn svg { width: 12px; height: 12px; transition: transform .25s var(--ease); }
+.adv-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.adv-btn .count { display: none; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+.adv-btn.on .count { display: inline-block; }
+.adv-btn.on { color: var(--text); }
+.adv-pop { position: fixed; z-index: 15; width: 330px; padding: 16px 16px 14px; border-radius: var(--radius-lg, 20px);
+  opacity: 0; transform: translateY(6px) scale(.98); pointer-events: none; transition: opacity .2s var(--ease), transform .2s var(--ease); }
+.adv-pop.show { opacity: 1; transform: none; pointer-events: auto; }
+.adv-pop.glass { background: linear-gradient(160deg, rgba(255,255,255,.9), rgba(246,248,252,.84)); }
+:root[data-theme="dark"] .adv-pop.glass { background: linear-gradient(160deg, rgba(48,53,68,.92), rgba(26,29,38,.9)); }
+@media (prefers-color-scheme: dark) { :root[data-theme="system"] .adv-pop.glass { background: linear-gradient(160deg, rgba(48,53,68,.92), rgba(26,29,38,.9)); } }
+.adv-pop h3 { font-size: 13px; font-weight: 650; margin-bottom: 2px; }
+.adv-pop .note { font-size: 11.5px; color: var(--text-3); margin-bottom: 12px; line-height: 1.4; }
+.adv-pop .field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--hairline, rgba(127,127,127,.15)); }
+.adv-pop .field > span { font-size: 13px; }
+.adv-pop .select select { width: 168px; }
+.adv-pop .other { display: none; grid-column: 1 / -1; }
+.adv-pop .other.show { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.adv-pop input[type=text] { height: 32px; border: 0; border-radius: 10px; padding: 0 12px; background: var(--track); color: var(--text); font: inherit; font-size: 12.5px; box-shadow: var(--inset); }
+.adv-pop input[type=text]:focus-visible { outline: 2px solid #5a98ff; outline-offset: 1px; }
+.adv-pop .other small { font-size: 11px; color: var(--text-3); padding-left: 4px; }
+.adv-pop .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.adv-pop .foot small { font-size: 11px; color: var(--text-3); }
+.adv-pop .foot .btn { height: 28px; padding: 0 12px; font-size: 12px; }
+
 /* ---------- toggle ---------- */
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
 .row + .row { border-top: 1px solid var(--hairline); }
@@ -340,7 +392,12 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
 
       <div class="options">
         <section class="glass card">
-          <h2>Overlay</h2>
+          <h2>Overlay
+            <button class="adv-btn" id="advBtn" aria-expanded="false" aria-controls="advPop" title="Speed profile, car model and FSD version">
+              Advanced <span class="count" id="advCount">0</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </h2>
           <div class="grid2">
             <span class="lbl">Speed</span>
             <div class="seg" data-key="units"><span class="pill"></span><button data-v="mph">mph</button><button data-v="kmh">km/h</button></div>
@@ -350,6 +407,16 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
           <div class="row" style="margin-top:8px">
             <label>GPS coordinates<span class="sub">Hidden by default for privacy</span></label>
             <button class="toggle" data-key="show_gps"></button>
+          </div>
+          <div class="row">
+            <label>Hardware<span class="sub" id="hwSub">Detected from the video size</span></label>
+            <div class="select"><select id="hardware" aria-label="Hardware version">
+              <option value="auto">Auto</option><option value="hw3">HW3</option><option value="hw4">HW4</option>
+            </select></div>
+          </div>
+          <div class="row">
+            <label>Show hardware in video<span class="sub">Adds HW3 or HW4 next to the time</span></label>
+            <button class="toggle" data-key="show_hardware"></button>
           </div>
         </section>
 
@@ -416,8 +483,22 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
       <button class="btn" id="licenseClose" style="width:34px;padding:0" title="Close">&#x2715;</button>
     </div>
     <div class="sheet-body" id="licenseBody"><pre>Loading…</pre></div>
-    <div class="sheet-foot"><span>Tesla Overlay <span id="appVersion">1.0.1</span> is free for personal use under the PolyForm Strict License 1.0.0.</span><span>Copyright &copy; Joshua Hugley 2026</span></div>
+    <div class="sheet-foot"><span>Tesla Overlay <span id="appVersion">1.0.3</span> is free for personal use under the PolyForm Strict License 1.0.0.</span><span>Copyright &copy; Joshua Hugley 2026</span></div>
   </div>
+</div>
+
+<div class="adv-pop glass" id="advPop" role="dialog" aria-label="Advanced overlay details">
+  <h3>Advanced</h3>
+  <div class="note">Tesla's clips don't record these, so pick them yourself. Anything you set is shown on the video above the time.</div>
+  <label class="field"><span>Speed profile</span>
+    <div class="select"><select id="speed_profile"><option value="">Not shown</option></select></div></label>
+  <label class="field"><span>Car model</span>
+    <div class="select"><select id="car_model"><option value="">Not shown</option></select></div></label>
+  <div class="field"><span>FSD version</span>
+    <div class="select"><select id="fsd_select" aria-label="FSD version"><option value="">Not shown</option></select></div>
+    <div class="other" id="fsdOther"><input type="text" id="fsdText" placeholder="Exact version, e.g. 14.3.13" spellcheck="false" autocomplete="off"><small id="fsdHint">Shows as FSD v…</small></div>
+  </div>
+  <div class="foot"><small id="advSummary">Nothing added</small><button class="btn" id="advClear">Clear all</button></div>
 </div>
 
 <div class="toast glass" id="toast"><span class="dot"></span><span id="toastMsg"></span><button class="btn" id="reveal">Show</button></div>
@@ -426,7 +507,8 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const DEFAULTS = { theme: "system", units: "mph", position: "bottom", show_gps: false, driving_path: true,
-  horizon: 0.49, flip_steering: false, export_map: false, inset_map: false, map_style: "auto", map_video: true, tab: "video", out_dir: "", lic_tab: "license" };
+  horizon: 0.49, flip_steering: false, hardware: "auto", show_hardware: true,
+  speed_profile: "", car_model: "", fsd_version: "", export_map: false, inset_map: false, map_style: "auto", map_video: true, tab: "video", out_dir: "", lic_tab: "license" };
 let S = { ...DEFAULTS };
 let clips = [];          // {path, name, camera, front}
 let selected = -1;
@@ -447,12 +529,14 @@ function placePill(seg) {
   pill.style.left = on.offsetLeft + "px"; pill.style.width = on.offsetWidth + "px";
 }
 function syncControls() {
+  if (typeof syncAdvanced === "function") syncAdvanced();
   $$(".seg").forEach(seg => {
     seg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === S[seg.dataset.key]));
     placePill(seg);
   });
   $$(".toggle").forEach(t => t.classList.toggle("on", !!S[t.dataset.key]));
   $("#horizon").value = Math.round(S.horizon * 1000); paintRange($("#horizon"));
+  $("#hardware").value = ["auto", "hw3", "hw4"].includes(S.hardware) ? S.hardware : "auto";
   $("#pathOpts").classList.toggle("disabled", !S.driving_path);
   $("#mapOpts").classList.toggle("disabled", !S.export_map && !S.inset_map);
   $("#outLabel").textContent = S.out_dir || "Same folder as each clip";
@@ -474,6 +558,16 @@ $$(".toggle").forEach(t => t.addEventListener("click", () => set(t.dataset.key, 
 $("#horizon").addEventListener("input", e => { paintRange(e.target); S.horizon = e.target.value / 1000; refresh(); });
 $("#horizon").addEventListener("change", save);
 $("#at").addEventListener("input", e => { paintRange(e.target); refresh(); });
+$("#hardware").addEventListener("change", e => set("hardware", e.target.value));
+function showHardware(info) {
+  const sub = $("#hwSub");
+  if (!info) { sub.textContent = clips.length ? "Couldn't read the video size" : "Detected from the video size"; sub.title = ""; return; }
+  const manual = S.hardware !== "auto";
+  sub.title = `Video size ${info.resolution}. HW3 records 1280 × 960; HW4 records 2896 × 1876 (front) and 1448 × 938 (other cameras).`;
+  if (!info.detected) sub.textContent = `Unknown size · using ${info.using}`;
+  else if (manual && info.detected !== info.using) sub.textContent = `Clip looks like ${info.detected}`;
+  else sub.textContent = `${manual ? "Matches" : "Detected"} ${info.detected} · ${info.resolution.replace(/ /g, "")}`;
+}
 paintRange($("#at"));
 window.addEventListener("resize", () => $$(".seg").forEach(placePill));
 
@@ -516,7 +610,7 @@ function opts() {
 }
 async function refresh() {
   const a = api(), stage = $("#stage"), img = $("#img"), hint = $("#hint");
-  if (!clips.length || selected < 0) { img.style.opacity = 0; hint.style.display = ""; hint.textContent = "Add a clip to see a live preview of the overlay."; return; }
+  if (!clips.length || selected < 0) { showHardware(null); img.style.opacity = 0; hint.style.display = ""; hint.textContent = "Add a clip to see a live preview of the overlay."; return; }
   if (!a) return;
   if (pv.running) { pv.again = true; return; }
   pv.running = true; stage.classList.add("loading");
@@ -526,7 +620,7 @@ async function refresh() {
       ? await a.map_preview(clip.path, opts())
       : await a.preview(clip.path, $("#at").value / 1000, opts());
     if (r.error) { hint.textContent = r.error; hint.style.display = ""; img.style.opacity = 0; }
-    else { img.src = r.image; img.style.opacity = 1; hint.style.display = "none"; }
+    else { img.src = r.image; img.style.opacity = 1; hint.style.display = "none"; if ("hardware" in r) showHardware(r.hardware); }
   } catch (err) { hint.textContent = String(err); hint.style.display = ""; }
   stage.classList.remove("loading"); pv.running = false;
   if (pv.again) { pv.again = false; refresh(); }
@@ -598,11 +692,93 @@ $("#licenseBody").addEventListener("click", e => {
   if (l && a) a.open_url(l.dataset.url);
 });
 
+/* ---------- advanced menu ---------- */
+let ADV = null;
+const advPop = $("#advPop"), advBtn = $("#advBtn");
+function fillAdvanced(c) {
+  ADV = c;
+  const add = (sel, items, label) => items.forEach(v => sel.add(new Option(label ? label(v) : v, v)));
+  const group = (sel, groups, label) => groups.forEach(([g, items]) => {
+    const og = document.createElement("optgroup"); og.label = g;
+    items.forEach(v => og.appendChild(new Option(label ? label(v) : v, v))); sel.appendChild(og);
+  });
+  add($("#speed_profile"), c.speed_profiles);
+  group($("#car_model"), c.car_models);
+  group($("#fsd_select"), c.fsd_versions, v => "v" + v);
+  $("#fsd_select").add(new Option("Other version…", "__other"));
+}
+const fsdListed = v => ADV && ADV.fsd_versions.some(([, items]) => items.includes(v));
+function advLabels() {
+  const out = [];
+  if (S.car_model) out.push(S.car_model);
+  if (S.fsd_version) out.push("FSD " + (/^v/i.test(S.fsd_version) ? S.fsd_version : "v" + S.fsd_version));
+  if (S.speed_profile) out.push(S.speed_profile);
+  return out;
+}
+function syncAdvanced() {
+  if (!ADV) return;
+  $("#speed_profile").value = S.speed_profile || "";
+  $("#car_model").value = S.car_model || "";
+  const sel = $("#fsd_select"), other = $("#fsdOther");
+  if (!S.fsd_version) { if (sel.value !== "__other") { sel.value = ""; other.classList.remove("show"); } }
+  else if (fsdListed(S.fsd_version)) { sel.value = S.fsd_version; other.classList.remove("show"); }
+  else { sel.value = "__other"; other.classList.add("show"); if (document.activeElement !== $("#fsdText")) $("#fsdText").value = S.fsd_version; }
+  const labels = advLabels();
+  $("#advCount").textContent = labels.length;
+  advBtn.classList.toggle("on", labels.length > 0);
+  $("#advSummary").textContent = labels.length ? "On video: " + labels.join(" · ") : "Nothing added";
+}
+function placeAdvanced() {
+  const r = advBtn.getBoundingClientRect(), w = advPop.offsetWidth, h = advPop.offsetHeight;
+  let left = Math.min(Math.max(12, r.right - w), innerWidth - w - 12);
+  let top = r.bottom + 8;
+  if (top + h > innerHeight - 12) top = Math.max(12, r.top - h - 8);
+  advPop.style.left = left + "px"; advPop.style.top = top + "px";
+}
+function toggleAdvanced(open) {
+  open = open === undefined ? !advPop.classList.contains("show") : open;
+  advPop.classList.toggle("show", open); advBtn.setAttribute("aria-expanded", open);
+  if (open) { syncAdvanced(); placeAdvanced(); }
+}
+advBtn.addEventListener("click", e => { e.stopPropagation(); toggleAdvanced(); });
+document.addEventListener("mousedown", e => {
+  if (advPop.classList.contains("show") && !advPop.contains(e.target) && !advBtn.contains(e.target)) toggleAdvanced(false);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && advPop.classList.contains("show")) toggleAdvanced(false); });
+addEventListener("resize", () => { if (advPop.classList.contains("show")) placeAdvanced(); });
+$("#speed_profile").addEventListener("change", e => set("speed_profile", e.target.value));
+$("#car_model").addEventListener("change", e => set("car_model", e.target.value));
+$("#fsd_select").addEventListener("change", e => {
+  const v = e.target.value, other = $("#fsdOther");
+  if (v === "__other") {
+    other.classList.add("show"); placeAdvanced();
+    $("#fsdText").value = fsdListed(S.fsd_version) ? "" : (S.fsd_version || "");
+    $("#fsdText").focus(); checkFsdText();
+  } else { other.classList.remove("show"); set("fsd_version", v); placeAdvanced(); }
+});
+let fsdTimer = 0;
+async function checkFsdText() {
+  const text = $("#fsdText").value.trim(), a = api(), hint = $("#fsdHint");
+  if (!text) { hint.textContent = "Type a version like 14.3.13 or 14.3 Lite"; if (S.fsd_version) set("fsd_version", ""); return; }
+  const label = a ? await a.fsd_label(text) : null;
+  if (!label) { hint.textContent = "Not a version number yet"; return; }
+  hint.textContent = "Shows as " + label;
+  const v = label.replace(/^FSD v/, "");
+  if (v !== S.fsd_version) set("fsd_version", v);
+}
+$("#fsdText").addEventListener("input", () => { clearTimeout(fsdTimer); fsdTimer = setTimeout(checkFsdText, 250); });
+$("#advClear").addEventListener("click", () => {
+  S.speed_profile = ""; S.car_model = ""; S.fsd_version = "";
+  $("#fsdOther").classList.remove("show"); $("#fsd_select").value = ""; $("#fsdText").value = "";
+  set("speed_profile", ""); placeAdvanced();
+});
+
 /* ---------- boot ---------- */
 async function boot() {
   const a = api();
   if (a) { try { S = { ...DEFAULTS, ...(await a.load_settings()) }; } catch (e) {} }
   if (a && a.version) { try { $("#appVersion").textContent = await a.version(); } catch (e) {} }
+  if (a && a.advanced_choices && !ADV) { try { fillAdvanced(await a.advanced_choices()); } catch (e) {} }
   syncControls(); renderList();
   requestAnimationFrame(() => $$(".seg").forEach(placePill));
 }

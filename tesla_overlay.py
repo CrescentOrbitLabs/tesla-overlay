@@ -4,7 +4,9 @@ steering, pedals, blinkers, Autopilot/FSD state and time burned in.
 
 Run with no arguments for the window, or from a terminal:
     tesla_overlay clip1.mp4 clip2.mp4 [--kmh] [--top] [--gps] [--path] [--horizon=0.5]
-                  [--flip-steering] [--map] [--map-corner] [--map-style=light|dark] [--no-map-video]
+                  [--flip-steering] [--hw=auto|hw3|hw4] [--no-hw-label]
+                  [--model="Model Y"] [--fsd=14.3] [--profile=Hurry]
+                  [--map] [--map-corner] [--map-style=light|dark] [--no-map-video]
 """
 import base64
 import io
@@ -17,7 +19,7 @@ import tesla_overlay_core as core
 import tesla_map
 
 APP_NAME = "Tesla Overlay"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.3"
 SUPPORT_URL = "https://buymeacoffee.com/joshuah1998"
 SIGNATURE = "Copyright \u00a9 Joshua Hugley 2026  \u00b7  Made with \u2764\ufe0f in South Carolina"
 SETTINGS = os.path.join(os.path.expanduser("~"), ".tesla_overlay.json")
@@ -93,7 +95,21 @@ def overlay_opts(o):
     return dict(units=o.get("units", "mph"), position=o.get("position", "bottom"),
                 show_gps=bool(o.get("show_gps")), driving_path=bool(o.get("driving_path")),
                 horizon=float(o.get("horizon", core.DEFAULT_HORIZON)),
-                flip_steering=bool(o.get("flip_steering")))
+                flip_steering=bool(o.get("flip_steering")),
+                hardware=o.get("hardware") if o.get("hardware") in core.HARDWARE_CHOICES else "auto",
+                show_hardware=bool(o.get("show_hardware", True)),
+                details=core.advanced_labels(o.get("car_model", ""), o.get("fsd_version", ""),
+                                             o.get("speed_profile", "")))
+
+
+def hardware_info(path, choice="auto"):
+    """What the app detected for a clip and what it will use, for the interface."""
+    try:
+        detected, w, h = core.clip_hardware(path)
+    except Exception:
+        return None
+    return {"detected": detected, "using": core.resolve_hardware(choice, w, h),
+            "resolution": f"{w} \u00d7 {h}"}
 
 
 _minimap_cache = {}
@@ -191,6 +207,14 @@ class Api:
     def version(self):
         return APP_VERSION
 
+    def advanced_choices(self):
+        return {"speed_profiles": list(core.SPEED_PROFILES),
+                "car_models": [[g, list(m)] for g, m in core.CAR_MODELS],
+                "fsd_versions": [[g, list(v)] for g, v in core.FSD_VERSIONS]}
+
+    def fsd_label(self, text):
+        return core.fsd_label(text)
+
     def save_settings(self, d):
         save_settings(d)
         return True
@@ -232,7 +256,7 @@ class Api:
                 except Exception:
                     hook = None  # no GPS in this clip; preview without the corner map
             img = core.preview(path, at=float(at), frame_hook=hook, **overlay_opts(o))
-            return {"image": _data_url(img)}
+            return {"image": _data_url(img), "hardware": hardware_info(path, overlay_opts(o)["hardware"])}
         except Exception as e:
             return {"error": str(e)}
 
@@ -242,7 +266,7 @@ class Api:
         try:
             if key not in self._map_cache:
                 self._map_cache[key] = _data_url(tesla_map.route_image(path, style, size=1000), "JPEG", 1000)
-            return {"image": self._map_cache[key]}
+            return {"image": self._map_cache[key], "hardware": hardware_info(path, overlay_opts(o)["hardware"])}
         except Exception as e:
             return {"error": str(e).splitlines()[0] if str(e) else "Couldn't build the map."}
 
@@ -361,7 +385,28 @@ def run_cli(argv):
                 show_gps="--gps" in argv, driving_path="--path" in argv,
                 horizon=next((float(a.split("=", 1)[1]) for a in argv if a.startswith("--horizon=")),
                              load_settings().get("horizon", core.DEFAULT_HORIZON)),
-                flip_steering="--flip-steering" in argv or load_settings().get("flip_steering", False))
+                flip_steering="--flip-steering" in argv or load_settings().get("flip_steering", False),
+                hardware=next((a.split("=", 1)[1].lower() for a in argv if a.startswith("--hw=")), "auto"),
+                show_hardware="--no-hw-label" not in argv)
+    def arg(name):
+        return next((a.split("=", 1)[1].strip('"') for a in argv if a.startswith(f"--{name}=")), "")
+    opts.update(car_model=arg("model"), fsd_version=arg("fsd"), speed_profile=arg("profile"))
+    models = {m.lower(): m for _, group in core.CAR_MODELS for m in group}
+    profiles = {p.lower(): p for p in core.SPEED_PROFILES}
+    if opts["car_model"] and opts["car_model"].lower() not in models:
+        print("--model must be one of: " + ", ".join(models.values()))
+        return 2
+    if opts["speed_profile"] and opts["speed_profile"].lower() not in profiles:
+        print("--profile must be one of: " + ", ".join(core.SPEED_PROFILES))
+        return 2
+    if opts["fsd_version"] and not core.fsd_label(opts["fsd_version"]):
+        print("--fsd must be a version number such as 14.3, 14.3.13 or \"14.3 Lite\"")
+        return 2
+    opts["car_model"] = models.get(opts["car_model"].lower(), "")
+    opts["speed_profile"] = profiles.get(opts["speed_profile"].lower(), "")
+    if opts["hardware"] not in core.HARDWARE_CHOICES:
+        print("--hw must be auto, hw3 or hw4")
+        return 2
     opts.update(export_map="--map" in argv, map_style=map_style, map_video="--no-map-video" not in argv,
                 inset_map="--map-corner" in argv, resolved_map_style=map_style)
 
@@ -394,6 +439,13 @@ def run_gui():
     driving_path = tk.BooleanVar(value=saved.get("driving_path", True))
     horizon = tk.DoubleVar(value=saved.get("horizon", core.DEFAULT_HORIZON))
     flip = tk.BooleanVar(value=saved.get("flip_steering", False))
+    hw_names = {"auto": "Auto detect", "hw3": "HW3", "hw4": "HW4"}
+    hardware = tk.StringVar(value=hw_names.get(saved.get("hardware", "auto"), "Auto detect"))
+    show_hw = tk.BooleanVar(value=saved.get("show_hardware", True))
+    not_shown = "Not shown"
+    speed_profile = tk.StringVar(value=saved.get("speed_profile") or not_shown)
+    car_model = tk.StringVar(value=saved.get("car_model") or not_shown)
+    fsd_version = tk.StringVar(value=saved.get("fsd_version") or not_shown)
 
     export_map = tk.BooleanVar(value=saved.get("export_map", False))
     inset_map = tk.BooleanVar(value=saved.get("inset_map", False))
@@ -402,6 +454,11 @@ def run_gui():
         return dict(units=units.get(), position=position.get(), show_gps=show_gps.get(),
                     driving_path=driving_path.get(), horizon=round(horizon.get(), 3),
                     flip_steering=flip.get(), export_map=export_map.get(), inset_map=inset_map.get(),
+                    hardware={v: k for k, v in hw_names.items()}.get(hardware.get(), "auto"),
+                    show_hardware=show_hw.get(),
+                    speed_profile="" if speed_profile.get() == not_shown else speed_profile.get(),
+                    car_model="" if car_model.get() == not_shown else car_model.get(),
+                    fsd_version="" if fsd_version.get() in (not_shown, "") else fsd_version.get().strip(),
                     map_video=saved.get("map_video", True),
                     resolved_map_style=saved.get("map_style") if saved.get("map_style") in tesla_map.STYLES else "dark")
 
@@ -486,8 +543,27 @@ def run_gui():
     ttk.Radiobutton(opts, text="Top", value="top", variable=position).pack(side="left", padx=(0, 16))
     ttk.Checkbutton(opts, text="Show GPS coordinates", variable=show_gps).pack(side="left")
 
+    vehf = ttk.Frame(frm)
+    vehf.grid(row=4, column=0, columnspan=3, sticky="w", pady=(0, 4))
+    hwf = ttk.Frame(vehf)
+    hwf.pack(anchor="w")
+    advf = ttk.Frame(vehf)
+    advf.pack(anchor="w", pady=(6, 0))
+    ttk.Label(advf, text="Advanced (shown on the video):").pack(side="left", padx=(0, 6))
+    for label, var, values, width, ro in (
+            ("Speed profile", speed_profile, list(core.SPEED_PROFILES), 9, True),
+            ("Model", car_model, [m for _, g in core.CAR_MODELS for m in g], 18, True),
+            ("FSD", fsd_version, [v for _, g in core.FSD_VERSIONS for v in g], 9, False)):
+        ttk.Label(advf, text=label).pack(side="left")
+        ttk.Combobox(advf, textvariable=var, values=[not_shown] + values, width=width,
+                     state="readonly" if ro else "normal").pack(side="left", padx=(4, 10))
+    ttk.Label(hwf, text="Hardware:").pack(side="left")
+    ttk.Combobox(hwf, textvariable=hardware, values=list(hw_names.values()), state="readonly",
+                 width=12).pack(side="left", padx=(4, 12))
+    ttk.Checkbutton(hwf, text="Show hardware version in video", variable=show_hw).pack(side="left")
+
     pathf = ttk.Frame(frm)
-    pathf.grid(row=4, column=0, columnspan=3, sticky="w", pady=(4, 4))
+    pathf.grid(row=5, column=0, columnspan=3, sticky="w", pady=(4, 4))
     ttk.Checkbutton(pathf, text="FSD-style driving path (front camera clips)",
                     variable=driving_path).pack(side="left")
     prev_btn = ttk.Button(pathf, text="Preview...")
@@ -496,17 +572,17 @@ def run_gui():
     ttk.Checkbutton(pathf, text="Map in video corner", variable=inset_map).pack(side="left", padx=(6, 0))
 
     outf = ttk.Frame(frm)
-    outf.grid(row=5, column=0, columnspan=3, sticky="w", pady=(4, 10))
+    outf.grid(row=6, column=0, columnspan=3, sticky="w", pady=(4, 10))
     ttk.Button(outf, text="Output folder...", command=choose_out).pack(side="left")
     out_lbl = ttk.Label(outf, text="Same folder as each clip", foreground="gray")
     out_lbl.pack(side="left", padx=8)
 
     bar = ttk.Progressbar(frm, length=440, maximum=1.0)
-    bar.grid(row=6, column=0, columnspan=2, sticky="we")
+    bar.grid(row=7, column=0, columnspan=2, sticky="we")
     go = ttk.Button(frm, text="Create videos")
-    go.grid(row=6, column=2, sticky="e", padx=(8, 0))
-    ttk.Label(frm, textvariable=status, wraplength=520).grid(row=7, column=0, columnspan=3, sticky="w", pady=(8, 0))
-    ttk.Label(frm, text=SIGNATURE, foreground="gray").grid(row=8, column=0, columnspan=3, pady=(12, 0))
+    go.grid(row=7, column=2, sticky="e", padx=(8, 0))
+    ttk.Label(frm, textvariable=status, wraplength=520).grid(row=8, column=0, columnspan=3, sticky="w", pady=(8, 0))
+    ttk.Label(frm, text=SIGNATURE, foreground="gray").grid(row=9, column=0, columnspan=3, pady=(12, 0))
 
     def refresh():
         if not state["busy"]:
@@ -590,7 +666,8 @@ def run_gui():
                 render()
 
         traces = [(v, v.trace_add("write", lambda *_: render()))
-                  for v in (at, horizon, flip, driving_path, inset_map, units, position, show_gps)]
+                  for v in (at, horizon, flip, driving_path, inset_map, units, position, show_gps, hardware, show_hw,
+                            speed_profile, car_model, fsd_version)]
 
         def closed(e):
             if e.widget is win:

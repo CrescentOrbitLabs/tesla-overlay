@@ -54,8 +54,8 @@ Get the files from the [latest release](../../releases/latest).
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Windows 10 and 11 | `TeslaOverlay-1.0.1-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
-| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.1-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
+| Windows 10 and 11 | `TeslaOverlay-1.0.3-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
+| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.3-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
 
 The apps aren't signed with paid developer certificates yet, which is why Windows and macOS ask before the first launch.
 
@@ -69,6 +69,10 @@ Add one or more clips, check the preview, choose your options, and press Create 
 
 If the blue path doesn't sit on the road in your car, drag Path height in the preview until it does. Settings are remembered.
 
+Tesla Overlay works out whether a clip came from an HW3 or HW4 car from its video size: HW3 records every camera at 1280 × 960, while HW4 records the front camera at 2896 × 1876 and the others at 1448 × 938. The hardware sets the camera's field of view for the driving path, and is shown next to the time in the video. If a clip was resized and gets detected wrong, choose HW3 or HW4 from the Hardware menu, or turn off Show hardware in video to hide the label.
+
+Tesla's clips don't record the car model, FSD version or speed profile, so you can add them yourself from the Advanced menu in the Overlay card. Choose a speed profile (Sloth, Chill, Standard, Hurry or Mad Max), a car model, and an FSD version from the list, or pick Other version to type an exact one such as 14.3.13. Anything you set appears in a second strip above the time on the video, and Clear all removes it.
+
 Maps need an internet connection the first time an area is mapped. Nothing else leaves your device; see [PRIVACY.md](PRIVACY.md).
 
 ## Command line
@@ -77,7 +81,9 @@ The desktop app also runs from a terminal:
 
 ```
 python tesla_overlay.py clip1.mp4 clip2.mp4 [--kmh] [--top] [--gps] [--path] [--horizon=0.49]
-                        [--flip-steering] [--map] [--map-corner] [--map-style=light|dark] [--no-map-video]
+                        [--flip-steering] [--hw=auto|hw3|hw4] [--no-hw-label]
+                        ["--model=Model Y"] [--fsd=14.3] [--profile=Hurry]
+                        [--map] [--map-corner] [--map-style=light|dark] [--no-map-video]
 ```
 
 ## Building from source
