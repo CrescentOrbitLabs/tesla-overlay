@@ -14,4 +14,6 @@ GPS coordinates from your clips are only drawn on a video if you turn on the GPS
 
 Settings such as units and theme are stored on your computer only.
 
-Questions: open an issue on this project's GitHub page.
+Questions: email support@crescentorbitlabs.com or open an issue on this project's GitHub page.
+
+Tesla Overlay is published by Crescent Orbit Labs LLC.

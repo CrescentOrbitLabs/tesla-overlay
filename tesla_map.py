@@ -20,7 +20,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 import tesla_overlay_core as core
 
-USER_AGENT = "TeslaOverlay/1.0.3 (dashcam overlay app; +https://buymeacoffee.com/joshuah1998)"
+USER_AGENT = "TeslaOverlay/1.0.4 (dashcam overlay app; +https://buymeacoffee.com/joshuah1998)"
 
 # Tile usage follows the OpenStreetMap tile policy: identifying User-Agent,
 # a few tiles per export, cached on disk, attribution shown on every output.

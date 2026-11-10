@@ -19,9 +19,11 @@ import tesla_overlay_core as core
 import tesla_map
 
 APP_NAME = "Tesla Overlay"
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 SUPPORT_URL = "https://buymeacoffee.com/joshuah1998"
-SIGNATURE = "Copyright \u00a9 Joshua Hugley 2026  \u00b7  Made with \u2764\ufe0f in South Carolina"
+SUPPORT_EMAIL = "support@crescentorbitlabs.com"
+COMPANY = "Crescent Orbit Labs LLC"
+SIGNATURE = "Copyright \u00a9 Crescent Orbit Labs LLC 2026  \u00b7  Made with \u2764\ufe0f in South Carolina"
 SETTINGS = os.path.join(os.path.expanduser("~"), ".tesla_overlay.json")
 
 
@@ -290,7 +292,7 @@ class Api:
 
     def open_url(self, url):
         import webbrowser
-        if isinstance(url, str) and url.startswith(("https://", "http://")):
+        if isinstance(url, str) and (url.startswith(("https://", "http://")) or url == "mailto:" + SUPPORT_EMAIL):
             webbrowser.open(url)
         return True
 
@@ -327,6 +329,60 @@ def webview2_installed():
     return False
 
 
+SPLASH_BG = {"dark": "#0E1A36", "light": "#F4F1EA"}
+
+
+def splash_variant():
+    """The full studio splash the first time each version runs, the short one after that."""
+    settings = load_settings()
+    if settings.get("splash_seen") == APP_VERSION:
+        return "short"
+    save_settings({"splash_seen": APP_VERSION})
+    return "full"
+
+
+def add_splash(html, dark):
+    """Overlay the Crescent Orbit Labs splash on the window. It plays once per launch,
+    a click or key press skips it, and it is skipped when the system asks for reduced motion."""
+    try:
+        with open(resource("splash.html"), encoding="utf-8") as fh:
+            page = fh.read()
+    except OSError:
+        return html
+    theme = "dark" if dark else "light"
+    variant = splash_variant()
+    hold = 1000 if variant == "full" else 450  # time to read the tagline before fading
+    query = f"theme={theme}&variant={variant}&loop=0"
+    page_js = json.dumps(page).replace("</", "<\\/")
+    block = f"""
+<div id="colSplash" style="position:fixed;inset:0;z-index:2147483000;background:{SPLASH_BG[theme]};transition:opacity .45s ease">
+  <iframe id="colSplashFrame" title="Crescent Orbit Labs" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:{SPLASH_BG[theme]}"></iframe>
+  <div id="colSplashSkip" style="position:absolute;inset:0;cursor:default"></div>
+</div>
+<script>
+(function () {{
+  var el = document.getElementById("colSplash");
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) {{ el.remove(); return; }}
+  var done = false;
+  function close() {{
+    if (done) return; done = true;
+    el.style.opacity = "0"; el.style.pointerEvents = "none";
+    setTimeout(function () {{ el.remove(); }}, 500);
+  }}
+  window.addEventListener("message", function (e) {{
+    if (e.data && e.data.type === "crescent-orbit-splash-done") setTimeout(close, {hold});
+  }});
+  document.getElementById("colSplashSkip").addEventListener("mousedown", close);
+  window.addEventListener("keydown", close, {{ once: true }});
+  setTimeout(close, 7000);
+  document.getElementById("colSplashFrame").srcdoc =
+    "<script>window.SPLASH_QUERY=" + JSON.stringify("{query}") + "<\\/script>" + {page_js};
+}})();
+</script>
+"""
+    return html.replace("</body>", block + "</body>", 1)
+
+
 def run_app():
     """Liquid glass window (system web view). Falls back to the classic window if unavailable."""
     if os.name == "nt" and not webview2_installed():
@@ -340,8 +396,9 @@ def run_app():
     api = Api()
     theme = load_settings().get("theme", "system")
     dark = theme == "dark" or (theme == "system" and system_is_dark())
+    html = add_splash(html, dark)
     window = webview.create_window(APP_NAME, html=html, js_api=api, width=1240, height=840,
-                                   min_size=(1120, 760), background_color="#07090e" if dark else "#e9edf5")
+                                   min_size=(1120, 760), background_color=SPLASH_BG["dark" if dark else "light"])
     api._window = window
 
     def bind_drop():
@@ -362,7 +419,8 @@ def run_app():
             from webview.menu import Menu, MenuAction
             menu = [Menu("Help", [
                 MenuAction("License and Open Source Notices", lambda: window.evaluate_js("window.openLicense()")),
-                MenuAction("Support me on Buy Me a Coffee", lambda: api.open_url(SUPPORT_URL)),
+                MenuAction("Email Support", lambda: api.open_url("mailto:" + SUPPORT_EMAIL)),
+                MenuAction("Support Tesla Overlay on Buy Me a Coffee", lambda: api.open_url(SUPPORT_URL)),
             ])]
         except Exception:
             menu = None
@@ -422,6 +480,47 @@ def run_cli(argv):
         print("  failed:", e)
 
 
+def bring_to_front(root):
+    # bring the window to the front on launch (macOS can open Tk apps behind others)
+    root.lift()
+    root.attributes("-topmost", True)
+    root.after(300, lambda: root.attributes("-topmost", False))
+    root.focus_force()
+
+
+def show_classic_splash(root):
+    """The Crescent Orbit Labs splash as a still card for the classic window: shown
+    centered for a moment while the window is built, then the window appears.
+    Returns True while the card is showing (the window is revealed when it closes)."""
+    theme = load_settings().get("theme", "system")
+    dark = theme == "dark" or (theme == "system" and system_is_dark())
+    path = resource(os.path.join("assets", f"splash-{'dark' if dark else 'light'}.png"))
+    if not os.path.exists(path):
+        return False
+    import tkinter as tk
+    try:
+        root.withdraw()
+        card = tk.Toplevel(root)
+        card.overrideredirect(True)
+        img = tk.PhotoImage(file=path)
+        tk.Label(card, image=img, borderwidth=0, highlightthickness=0).pack()
+        card.image = img
+        w, h = img.width(), img.height()
+        card.geometry(f"{w}x{h}+{(card.winfo_screenwidth() - w) // 2}+{(card.winfo_screenheight() - h) // 2}")
+
+        def finish(_e=None):
+            if card.winfo_exists():
+                card.destroy()
+                root.deiconify()
+                bring_to_front(root)
+        card.bind("<Button-1>", finish)
+        card.after(1800, finish)
+        return True
+    except Exception:
+        root.deiconify()
+        return False
+
+
 def run_gui():
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
@@ -429,6 +528,7 @@ def run_gui():
     root = tk.Tk()
     root.title(APP_NAME)
     root.resizable(False, False)
+    splashing = show_classic_splash(root)
 
     files = []
     state = {"busy": False, "cancel": False}
@@ -493,11 +593,12 @@ def run_gui():
     menubar = tk.Menu(root)
     helpm = tk.Menu(menubar, tearoff=0)
     helpm.add_command(label="License and Open Source Notices...", command=show_license)
-    helpm.add_command(label="Support me on Buy Me a Coffee", command=lambda: webbrowser.open(SUPPORT_URL))
+    helpm.add_command(label="Email Support (" + SUPPORT_EMAIL + ")", command=lambda: webbrowser.open("mailto:" + SUPPORT_EMAIL))
+    helpm.add_command(label="Support Tesla Overlay on Buy Me a Coffee", command=lambda: webbrowser.open(SUPPORT_URL))
     menubar.add_cascade(label="Help", menu=helpm)
     root.config(menu=menubar)
     ttk.Label(frm, text="Clips").grid(row=0, column=0, sticky="w")
-    coffee = tk.Label(frm, text="\u2615  Support me on Buy Me a Coffee", fg="#b07800", cursor="hand2",
+    coffee = tk.Label(frm, text="\u2615  Support Tesla Overlay on Buy Me a Coffee", fg="#b07800", cursor="hand2",
                       font=("TkDefaultFont", 10, "underline"))
     coffee.grid(row=0, column=1, sticky="n")
     coffee.bind("<Button-1>", lambda e: webbrowser.open(SUPPORT_URL))
@@ -716,11 +817,8 @@ def run_gui():
 
     go.config(command=start)
     refresh()
-    # bring the window to the front on launch (macOS can open Tk apps behind others)
-    root.lift()
-    root.attributes("-topmost", True)
-    root.after(300, lambda: root.attributes("-topmost", False))
-    root.focus_force()
+    if not splashing:
+        bring_to_front(root)
     root.mainloop()
 
 

@@ -47,6 +47,9 @@ Every Tesla dashcam clip recorded on recent firmware carries hidden, frame-by-fr
 <p align="center">
   <img src="docs/images/mac-light.png" alt="Tesla Overlay on a Mac in light mode, showing a route map">
 </p>
+<p align="center">
+  <img src="docs/images/advanced-menu.png" alt="The Advanced menu with speed profile, car model and FSD version">
+</p>
 
 ## Download
 
@@ -54,8 +57,8 @@ Get the files from the [latest release](../../releases/latest).
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Windows 10 and 11 | `TeslaOverlay-1.0.3-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
-| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.3-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
+| Windows 10 and 11 | `TeslaOverlay-1.0.4-windows.zip` | Unzip and run `TeslaOverlay.exe`. On the SmartScreen prompt, click More info, then Run anyway. |
+| macOS 11 or newer (Apple Silicon and Intel) | `TeslaOverlay-1.0.4-mac.zip` | Unzip and move Tesla Overlay to Applications. The first time, open it, then go to System Settings > Privacy & Security and click Open Anyway. |
 
 The apps aren't signed with paid developer certificates yet, which is why Windows and macOS ask before the first launch.
 
@@ -90,6 +93,10 @@ python tesla_overlay.py clip1.mp4 clip2.mp4 [--kmh] [--top] [--gps] [--path] [--
 
 Install Python 3.12, then run `pip install -r requirements.txt` and `python tesla_overlay.py`, or double-click `run_windows.bat` or `run_mac.command`. Release builds are made with PyInstaller by the workflow in `.github/workflows/build.yml`.
 
+## Help and contact
+
+Questions, problems or feedback: email [support@crescentorbitlabs.com](mailto:support@crescentorbitlabs.com) or [open an issue](../../issues).
+
 ## Support the project
 
 Tesla Overlay is free. If it's useful to you:
@@ -103,6 +110,6 @@ Tesla Overlay is free to use for personal and noncommercial purposes under the [
 
 It bundles FFmpeg (GNU GPL) and other open source components, and uses OpenStreetMap data (© OpenStreetMap contributors). Their licenses and source links are listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), with full license texts in [licenses](licenses). The same information is in the app under License.
 
-Tesla Overlay is an independent project and is not affiliated with, endorsed by or sponsored by Tesla, Inc. "Tesla" is a trademark of Tesla, Inc.
+Tesla Overlay is made by Crescent Orbit Labs LLC. It is an independent project and is not affiliated with, endorsed by or sponsored by Tesla, Inc. "Tesla" is a trademark of Tesla, Inc.
 
-Copyright © 2026 Joshua Hugley. Made with ❤️ in South Carolina.
+Copyright © 2026 Crescent Orbit Labs LLC. Made with ❤️ in South Carolina.

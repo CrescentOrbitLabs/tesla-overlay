@@ -332,7 +332,7 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
     </div>
     <a class="support" id="support" href="https://buymeacoffee.com/joshuah1998" target="_blank" rel="noopener" title="buymeacoffee.com/joshuah1998">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3.5c0 1 1 1 1 2s-1 1-1 2M12 3.5c0 1 1 1 1 2s-1 1-1 2"/></svg>
-      Support me on Buy Me a Coffee
+      Support Tesla Overlay on Buy Me a Coffee
     </a>
     <div class="header-right">
       <button class="btn subtle" id="licenseBtn" title="License and open source notices">
@@ -470,7 +470,7 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
       Create videos
     </button>
   </footer>
-  <div class="signature">Copyright &copy; Joshua Hugley 2026 &nbsp;&middot;&nbsp; Made with <span class="heart">❤️</span> in South Carolina</div>
+  <div class="signature">Copyright &copy; Crescent Orbit Labs LLC 2026 &nbsp;&middot;&nbsp; Made with <span class="heart">❤️</span> in South Carolina</div>
 </div>
 
 <div class="scrim" id="licenseScrim">
@@ -483,7 +483,7 @@ footer { display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 
       <button class="btn" id="licenseClose" style="width:34px;padding:0" title="Close">&#x2715;</button>
     </div>
     <div class="sheet-body" id="licenseBody"><pre>Loading…</pre></div>
-    <div class="sheet-foot"><span>Tesla Overlay <span id="appVersion">1.0.3</span> is free for personal use under the PolyForm Strict License 1.0.0.</span><span>Copyright &copy; Joshua Hugley 2026</span></div>
+    <div class="sheet-foot"><span>Tesla Overlay <span id="appVersion">1.0.4</span> is free for personal use under the PolyForm Strict License 1.0.0.</span><span>Copyright &copy; Crescent Orbit Labs LLC 2026 &nbsp;&middot;&nbsp; <a href="mailto:support@crescentorbitlabs.com" class="mail">support@crescentorbitlabs.com</a></span></div>
   </div>
 </div>
 
@@ -687,6 +687,9 @@ $("#licenseClose").addEventListener("click", closeLicense);
 $("#licenseScrim").addEventListener("click", e => { if (e.target.id === "licenseScrim") closeLicense(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeLicense(); });
 $("#licTab").addEventListener("click", () => setTimeout(showLicenseTab, 0));
+document.querySelectorAll("a.mail").forEach(m => m.addEventListener("click", e => {
+  const a = api(); if (a && a.open_url) { e.preventDefault(); a.open_url(m.getAttribute("href")); }
+}));
 $("#licenseBody").addEventListener("click", e => {
   const l = e.target.closest("a[data-url]"); const a = api();
   if (l && a) a.open_url(l.dataset.url);

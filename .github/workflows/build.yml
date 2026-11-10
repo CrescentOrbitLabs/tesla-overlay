@@ -1,0 +1,95 @@
+name: Build and release
+
+# Push a tag such as v1.0.4 to build the Windows and Mac apps and publish a GitHub Release.
+# "Run workflow" on the Actions tab builds the apps without releasing.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+
+      - name: Version
+        shell: bash
+        run: echo "VERSION=$(cat VERSION)" >> "$GITHUB_ENV"
+
+      - name: Build (macOS .app)
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --windowed --name "Tesla Overlay" \
+            --osx-bundle-identifier com.crescentorbitlabs.teslaoverlay --icon assets/icon.icns \
+            --add-data "ui.html:." --add-data "splash.html:." --add-data "assets/splash-dark.png:assets" --add-data "assets/splash-light.png:assets" --add-data "LICENSE:." --add-data "THIRD_PARTY_NOTICES.txt:." \
+            --add-data "licenses:licenses" --collect-all webview \
+            --collect-binaries imageio_ffmpeg --collect-data imageio_ffmpeg \
+            tesla_overlay.py
+          PLIST="dist/Tesla Overlay.app/Contents/Info.plist"
+          plutil -replace CFBundleShortVersionString -string "$VERSION" "$PLIST"
+          plutil -replace CFBundleVersion -string "$VERSION" "$PLIST"
+          plutil -replace NSHumanReadableCopyright -string "Copyright © 2026 Crescent Orbit Labs LLC. PolyForm Strict License 1.0.0." "$PLIST"
+          codesign --force --deep --sign - "dist/Tesla Overlay.app"
+          mkdir pkg && cp -R "dist/Tesla Overlay.app" LICENSE THIRD_PARTY_NOTICES.txt licenses pkg/
+          cd pkg && ditto -c -k . "../TeslaOverlay-$VERSION-mac.zip"
+
+      - name: Build (Windows .exe)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name TeslaOverlay `
+            --icon assets/icon.ico --version-file assets/windows_version_info.txt `
+            --add-data "ui.html;." --add-data "splash.html;." --add-data "assets/splash-dark.png;assets" --add-data "assets/splash-light.png;assets" --add-data "LICENSE;." --add-data "THIRD_PARTY_NOTICES.txt;." `
+            --add-data "licenses;licenses" --collect-all webview --hidden-import clr `
+            --collect-all clr_loader --collect-all pythonnet `
+            --collect-binaries imageio_ffmpeg --collect-data imageio_ffmpeg `
+            tesla_overlay.py
+          Compress-Archive -Path dist/TeslaOverlay.exe, LICENSE, THIRD_PARTY_NOTICES.txt, licenses `
+            -DestinationPath "TeslaOverlay-$env:VERSION-windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: TeslaOverlay-*-${{ matrix.platform }}.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "desktop-*"
+          merge-multiple: true
+          path: dist
+      - name: Checksums and release notes
+        run: |
+          cd dist && sha256sum * > SHA256SUMS.txt && cd ..
+          NOTES="docs/release-notes/${GITHUB_REF_NAME}.md"
+          [ -f "$NOTES" ] || NOTES=CHANGELOG.md
+          sed "s#OWNER/REPO#${GITHUB_REPOSITORY}#g" "$NOTES" > release-notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Tesla Overlay ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: dist/*

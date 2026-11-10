@@ -1,0 +1,10 @@
+name: Feature request
+description: An idea for Tesla Overlay
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like it to do?
+    validations:
+      required: true

@@ -19,13 +19,13 @@ In the repository's Settings > General, upload `docs/images/social-preview.png` 
 Option 1, let GitHub build it. Tag the version and push the tag:
 
 ```
-git tag v1.0.3
-git push origin v1.0.3
+git tag v1.0.4
+git push origin v1.0.4
 ```
 
-The workflow builds the Windows and Mac apps on GitHub's own Windows and Mac machines, adds `SHA256SUMS.txt`, and publishes the release using `docs/release-notes/v1.0.3.md`. Progress shows on the Actions tab; it takes about ten minutes.
+The workflow builds the Windows and Mac apps on GitHub's own Windows and Mac machines, adds `SHA256SUMS.txt`, and publishes the release using `docs/release-notes/v1.0.4.md`. Progress shows on the Actions tab; it takes about ten minutes.
 
-Option 2, upload ready-made files. On GitHub, go to Releases > Draft a new release, create the tag `v1.0.3`, paste `docs/release-notes/v1.0.3.md` as the description (replace `OWNER/REPO` with your username and repository name), and attach `TeslaOverlay-1.0.3-windows.zip`, `TeslaOverlay-1.0.3-mac.zip` and `SHA256SUMS.txt`.
+Option 2, upload ready-made files. On GitHub, go to Releases > Draft a new release, create the tag `v1.0.4`, paste `docs/release-notes/v1.0.4.md` as the description (replace `OWNER/REPO` with your username and repository name), and attach `TeslaOverlay-1.0.4-windows.zip`, `TeslaOverlay-1.0.4-mac.zip` and `SHA256SUMS.txt`.
 
 ## Next versions
 

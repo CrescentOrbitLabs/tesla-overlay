@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4 (2026-11-08)
+
+- Tesla Overlay is now published by Crescent Orbit Labs LLC. Copyright notices, the app's License panel, the Windows file details and the Mac app information now name Crescent Orbit Labs LLC.
+- A Crescent Orbit Labs splash screen plays when the app opens: the full animation the first time each version runs, a short one after that. Click or press any key to skip it; it's skipped automatically when the system's reduce motion setting is on. The classic window shows a still version.
+- Support email: support@crescentorbitlabs.com, now in the Help menu, the License panel, the README and the privacy notice.
+- The Mac app's identifier is now com.crescentorbitlabs.teslaoverlay, so macOS may ask to confirm opening it once more.
+
 ## 1.0.3 (2026-11-07)
 
 - New Advanced menu in the Overlay card for details the clips don't record: speed profile (Sloth, Chill, Standard, Hurry, Mad Max), car model (every Tesla model and trim), and FSD version (every release from v9 to v14.3, including the HW3 Lite builds, or any exact version typed in). Anything set is shown in a strip above the time on the video.

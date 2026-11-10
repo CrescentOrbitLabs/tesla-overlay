@@ -1,0 +1,33 @@
+name: Bug report
+description: Something isn't working right
+labels: [bug]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, macOS]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in the License panel.
+      placeholder: "1.0.4"
+  - type: input
+    id: car
+    attributes:
+      label: Car hardware and firmware
+      placeholder: "HW4, 2025.44.25"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or error messages
+      description: Please don't post clips publicly unless you're comfortable sharing the location of the drive.
